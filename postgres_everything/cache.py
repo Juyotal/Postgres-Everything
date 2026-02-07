@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any, Callable
 
@@ -63,11 +62,8 @@ class Cache(PostgresModule):
                 self.delete(key)
                 return None
 
-        # psycopg deserialises JSONB automatically; unwrap if still a string.
-        value = row["value"]
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
+        # psycopg3 automatically deserialises JSONB columns to Python objects.
+        return row["value"]
 
     def set(self, key: str, value: Any, *, ttl: int | None = None) -> None:
         """Store ``value`` under ``key``, optionally with a TTL.
@@ -192,7 +188,5 @@ class Cache(PostgresModule):
             (key, amount, amount),
         )
         assert row is not None
-        value = row["value"]
-        if isinstance(value, str):
-            return int(json.loads(value))
-        return int(value)
+        # psycopg3 auto-deserialises JSONB; value is already an int.
+        return int(row["value"])

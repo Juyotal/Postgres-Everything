@@ -33,7 +33,7 @@ def test_exists(pg):
 
 def test_ttl_expiration(pg):
     pg.cache.set("expiring", "bye", ttl=1)
-    assert pg.cache.get("expiring") == "expiring"  # still alive
+    assert pg.cache.get("expiring") == "bye"  # still alive
     time.sleep(1.1)
     assert pg.cache.get("expiring") is None  # expired
 

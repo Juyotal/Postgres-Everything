@@ -17,7 +17,11 @@ def _configure_connection(conn: psycopg.Connection) -> None:
 
         register_vector(conn)
     except ImportError:
-        logger.debug("pgvector not installed; vector adapter not registered")
+        logger.debug("pgvector Python package not installed; vector adapter skipped")
+    except Exception:
+        # The vector extension may not be installed in the database yet;
+        # registration will succeed after the migration runs.
+        logger.debug("pgvector type adapter not registered (extension not yet installed)")
 
 
 class ConnectionPool:

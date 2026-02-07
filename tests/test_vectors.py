@@ -6,6 +6,12 @@ import pytest
 
 from postgres_everything.embeddings.base import EmbeddingProvider
 from postgres_everything.exceptions import ConfigurationError
+from tests.conftest import PGVECTOR_AVAILABLE
+
+pytestmark = pytest.mark.skipif(
+    not PGVECTOR_AVAILABLE,
+    reason="pgvector extension not available on this Postgres server",
+)
 
 
 class DeterministicEmbeddings(EmbeddingProvider):

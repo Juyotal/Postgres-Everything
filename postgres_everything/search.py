@@ -148,7 +148,7 @@ class SearchEngine(PostgresModule):
         """
         snippet_expr = (
             "ts_headline('english', body, websearch_to_tsquery('english', %s),"
-            " 'MaxWords=30, MinWords=10') AS snippet,"
+            " 'MaxWords=30, MinWords=10') AS snippet"
             if snippet
             else ""
         )
@@ -195,12 +195,14 @@ class SearchEngine(PostgresModule):
         collection_clause = "AND collection = %s" if collection else ""
         collection_params = [collection] if collection else []
 
+        # word_similarity compares the query against the best-matching substring of the
+        # title, so a short misspelled word still scores well against a multi-word title.
         sql = f"""
             SELECT
                 id, title, body, metadata, collection,
-                similarity(title, %s) AS similarity
+                word_similarity(%s, title) AS similarity
             FROM pg_search_documents
-            WHERE similarity(title, %s) >= %s
+            WHERE word_similarity(%s, title) >= %s
               {collection_clause}
             ORDER BY similarity DESC
             LIMIT %s

@@ -86,8 +86,15 @@ class PubSub(PostgresModule):
             logger.info("PubSub received signal %d, shutting down…", signum)
             running = False
 
-        old_sigterm = signal.signal(signal.SIGTERM, _stop)
-        old_sigint = signal.signal(signal.SIGINT, _stop)
+        # signal.signal() only works in the main thread; skip in worker threads.
+        _has_signal = False
+        old_sigterm = old_sigint = None
+        try:
+            old_sigterm = signal.signal(signal.SIGTERM, _stop)
+            old_sigint = signal.signal(signal.SIGINT, _stop)
+            _has_signal = True
+        except ValueError:
+            pass
 
         try:
             with self._pool.raw_connection(autocommit=True) as conn:
@@ -102,8 +109,9 @@ class PubSub(PostgresModule):
                     if timeout is not None and elapsed >= timeout:
                         break
         finally:
-            signal.signal(signal.SIGTERM, old_sigterm)
-            signal.signal(signal.SIGINT, old_sigint)
+            if _has_signal:
+                signal.signal(signal.SIGTERM, old_sigterm)
+                signal.signal(signal.SIGINT, old_sigint)
 
     # ------------------------------------------------------------------
     # Subscriber — generator
